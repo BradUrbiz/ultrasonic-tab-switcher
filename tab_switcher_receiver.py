@@ -2,19 +2,21 @@ import socket
 import pyautogui
 import time
 
-port = 1
+port = 65432  # port to listen on
 
 def switch_tab():
     time.sleep(0.1)
     pyautogui.hotkey("ctrl", "tab")
     print("Tab Switched")
 
+
 def main():
-    server_sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_sock.bind(("", port))
     server_sock.listen(1)
 
-    print("...")
+    print("Active")
 
     while True:
         try:
@@ -36,3 +38,5 @@ def main():
             print(f"Error: {e}")
 
     server_sock.close()
+
+main()
