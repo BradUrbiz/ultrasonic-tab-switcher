@@ -1,6 +1,10 @@
 import RPi.GPIO as GPIO
 import bluetooth
 import time
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 GPIO.setmode(GPIO.BCM)
 trig = 23
@@ -11,7 +15,7 @@ GPIO.setup(echo, GPIO.IN)
 change_threshold = 10 # trigger amount needed
 sample_interval  = 0.5 # seconds between readings
 cooldown = 2.0 # cooldown
-receiver = "XX:XX:XX:XX:XX:XX" # Bluetooth MAC
+reciever_address = os.getenv("receiver_address") # home computer address for bluetooth
 port = 1
 
 
