@@ -1,5 +1,5 @@
 import RPi.GPIO as GPIO
-import bluetooth
+import socket
 import time
 from dotenv import load_dotenv
 import os
@@ -13,10 +13,10 @@ GPIO.setup(trig, GPIO.OUT)
 GPIO.setup(echo, GPIO.IN)
 
 change_threshold = 10 # trigger amount needed
-sample_interval  = 0.5 # seconds between readings
+sample_interval = 0.5 # seconds between readings
 cooldown = 2.0 # cooldown
-reciever_address = os.getenv("receiver_address") # home computer address for bluetooth
-port = 1
+reciever_address = os.getenv("receiver_ip") # home computer address for wifi
+port = 65432
 
 
 def get_distance():
@@ -45,12 +45,12 @@ def get_distance():
 
 def send_signal(msg="SWITCH"):
     try:
-        sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((reciever_address, port))
-        sock.send(msg)
+        sock.send(msg.encode("utf-8"))
         sock.close()
         print(f"Sent {msg}")
-    except bluetooth.BluetoothError as e:
+    except Exception as e:
         print(f"BT error: {e}")
 
 
@@ -86,3 +86,5 @@ def main():
         print("Terminated")
     finally:
         GPIO.cleanup()
+
+main()
