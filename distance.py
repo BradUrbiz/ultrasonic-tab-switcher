@@ -1,37 +1,84 @@
 import RPi.GPIO as GPIO
+import bluetooth
 import time
 
 GPIO.setmode(GPIO.BCM)
+trig = 23
+echo = 24
+GPIO.setup(trig, GPIO.OUT)
+GPIO.setup(echo, GPIO.IN)
 
-TRIG = 23
-ECHO = 24
+change_threshold = 10 # trigger amount needed
+sample_interval  = 0.5 # seconds between readings
+cooldown = 2.0 # cooldown
+receiver = "XX:XX:XX:XX:XX:XX" # Bluetooth MAC
+port = 1
 
-GPIO.setup(TRIG, GPIO.OUT)
-GPIO.setup(ECHO, GPIO.IN)
 
 def get_distance():
-    GPIO.output(TRIG, False)
+    GPIO.output(trig, False)
     time.sleep(0.05)
 
-    GPIO.output(TRIG, True)
+    GPIO.output(trig, True)
     time.sleep(0.00001)
-    GPIO.output(TRIG, False)
+    GPIO.output(trig, False)
 
-    while GPIO.input(ECHO) == 0:
+    timeout = time.time() + 0.1
+    while GPIO.input(echo) == 0:
         pulse_start = time.time()
+        if pulse_start > timeout:
+            return None
 
-    while GPIO.input(ECHO) == 1:
+    timeout = time.time() + 0.1
+    while GPIO.input(echo) == 1:
         pulse_end = time.time()
+        if pulse_end > timeout:
+            return None
 
-    pulse_duration = pulse_end - pulse_start
-    distance = pulse_duration * 17150
-    return round(distance, 2)
+    duration = pulse_end - pulse_start
+    return round(duration * 17150, 2)
 
-try:
-    while True:
-        dist = get_distance()
-        print("Distance:", dist, "cm")
-        time.sleep(0.5)
 
-except KeyboardInterrupt:
-    GPIO.cleanup()
+def send_signal(msg="SWITCH"):
+    try:
+        sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        sock.connect((reciever_address, port))
+        sock.send(msg)
+        sock.close()
+        print(f"Sent {msg}")
+    except bluetooth.BluetoothError as e:
+        print(f"BT error: {e}")
+
+
+def main():
+    prev = None
+    last_trigger = 0
+
+    print("Active")
+    try:
+        while True:
+            dist = get_distance()
+
+            if dist is None:
+                print("Invalid?!?")
+                time.sleep(sample_interval)
+                continue
+
+            print(f"{dist} cm")
+
+            if prev is not None:
+                change = abs(dist - prev)
+                now = time.time()
+
+                if change >= change_threshold and (now - last_trigger) > cooldown:
+                    print(f"Change of: {change:.1f} cm detected")
+                    send_signal("SWITCH")
+                    last_trigger = now
+
+            prev = dist
+            time.sleep(sample_interval)
+
+    except KeyboardInterrupt:
+        print("Terminated")
+    finally:
+        GPIO.cleanup()
