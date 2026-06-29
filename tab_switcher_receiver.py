@@ -1,9 +1,11 @@
 import socket
 import webbrowser
+import pyautogui
 
 port = 65432  
 
 def switch_tab():
+    pyautogui.hotkey('ctrl', 'w')  
     webbrowser.open("https://www.khanacademy.org/math/precalculus/x9e81a4f98389efdf:composite/x9e81a4f98389efdf:composing/a/finding-and-evaluating-composite-functions")
     print("Tab Switched")
 
