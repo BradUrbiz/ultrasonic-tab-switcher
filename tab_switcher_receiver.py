@@ -1,14 +1,11 @@
 import socket
-import pyautogui
-import time
+import webbrowser
 
-port = 65432  # port to listen on
+port = 65432  
 
 def switch_tab():
-    time.sleep(0.1)
-    pyautogui.hotkey("ctrl", "tab")
+    webbrowser.open("https://www.khanacademy.org/math/precalculus/x9e81a4f98389efdf:composite/x9e81a4f98389efdf:composing/a/finding-and-evaluating-composite-functions")
     print("Tab Switched")
-
 
 def main():
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
